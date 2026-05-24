@@ -9,8 +9,9 @@ Three stages per line:
   2. acknowledgement (Noyo ack received / portal update marked done)
   3. verification (carrier's claims system actually reflects the change)
 
-Marcus's case lives in stage 3: Noyo acked the transaction but the
-carrier never propagated to claims. Daily reconciliation catches it.
+The silent-drop scenario lives in stage 3: Noyo acked the transaction
+but the carrier never propagated to claims. Daily reconciliation
+catches it before the employee discovers it through a denied claim.
 """
 from __future__ import annotations
 import uuid
@@ -207,7 +208,7 @@ def retry_or_escalate(db: Session, txn: CarrierTransaction) -> None:
 
 def verify_coverage(db: Session, txn: CarrierTransaction) -> bool:
     """v2 step — confirm the change actually propagated to the carrier's
-    claims system. This is the gap that hit Marcus."""
+    claims system. This is the gap the silent-drop scenario exposes."""
     result = noyo.verify_coverage(txn.transaction_id)
     if result.get("verified"):
         txn.verification_status = VERIFY_VERIFIED
@@ -255,7 +256,7 @@ def advance_if_all_verified(db: Session, qle: QLE) -> bool:
 
 def reconcile(db: Session) -> dict:
     """Daily reconciliation — for every submitted transaction older than
-    24h, run the verification step. Drops (Marcus's case) end up here."""
+    24h, run the verification step. Silent drops end up here."""
     discrepancies = []
     txns = db.query(CarrierTransaction).filter(
         CarrierTransaction.verification_status == VERIFY_PENDING

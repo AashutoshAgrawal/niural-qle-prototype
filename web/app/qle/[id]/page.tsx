@@ -17,8 +17,11 @@ import { DisputeForm } from "./dispute-form";
 import { HrActionPanel } from "./hr-action-panel";
 import { formatDate } from "@/lib/utils";
 import {
-  FileText, Download, AlertTriangle, CircleCheck, Scale, ShieldCheck,
+  FileText, Download, AlertTriangle, CircleCheck, Scale, ShieldCheck, Sparkles,
 } from "lucide-react";
+import { DocPreview } from "@/components/review/doc-preview";
+import { DocStatusBanner, deriveDocState } from "@/components/review/doc-status-banner";
+import { enrichReview } from "@/lib/review-mock";
 
 export const dynamic = "force-dynamic";
 
@@ -112,40 +115,42 @@ export default async function QlePage({ params }: { params: Promise<{ id: string
                   <FileText className="h-4 w-4 text-muted" /> Document
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                {qle.documents.map((d) => (
-                  <div key={d.id} className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="h-10 w-10 rounded-lg bg-surface-3 flex items-center justify-center">
-                          <FileText className="h-4 w-4 text-muted" />
-                        </div>
-                        <div>
-                          <div className="font-mono text-sm">{d.filename}</div>
-                          <div className="text-xs text-muted">
-                            Classified as <span className="text-ink-2">{d.classified_type || "uncertain"}</span>
-                            {d.quality_issue && <> · quality: {d.quality_issue}</>}
+              <CardContent className="space-y-4">
+                {qle.documents.map((d) => {
+                  const enrichment = enrichReview(qle);
+                  const banner = deriveDocState(qle, d);
+                  return (
+                    <div key={d.id} className="space-y-4">
+                      <DocStatusBanner props={banner} />
+
+                      <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-5">
+                        <DocPreview enrichment={enrichment} filename={d.filename} />
+                        <div className="space-y-4">
+                          <div>
+                            <div className="text-[11px] uppercase tracking-wider text-muted font-semibold mb-2">
+                              Classifier output
+                            </div>
+                            <ConfidenceMeter value={d.confidence} />
+                            <dl className="mt-3 space-y-2 text-sm">
+                              <KvLine k="Classified as" v={d.classified_type?.replace(/_/g, " ") || "uncertain"} />
+                              <KvLine k="Routing" v={(d.routing_decision || "").replace(/_/g, " ") || "—"} />
+                              <KvLine k="Quality" v={d.quality_issue || "OK"} />
+                            </dl>
                           </div>
+                          {d.notes && session.kind !== "employee" && (
+                            <div className="text-xs p-3 rounded-lg bg-surface-2 border border-default leading-relaxed">
+                              <div className="flex items-center gap-1.5 text-muted font-medium mb-1">
+                                <Sparkles className="h-3 w-3" />
+                                System note
+                              </div>
+                              <div className="text-ink-2">{d.notes}</div>
+                            </div>
+                          )}
                         </div>
                       </div>
-                      {d.routing_decision && (
-                        <Badge variant={
-                          d.routing_decision === "auto_approve" ? "success" :
-                          d.routing_decision === "benops_review" ? "warning" :
-                          "danger"
-                        }>
-                          {d.routing_decision.replace("_", " ")}
-                        </Badge>
-                      )}
                     </div>
-                    <ConfidenceMeter value={d.confidence} />
-                    {d.notes && session.kind !== "employee" && (
-                      <div className="text-sm text-muted p-3 rounded-lg bg-surface-2 border border-default">
-                        {d.notes}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </CardContent>
             </Card>
           )}
@@ -284,6 +289,15 @@ function ContextBanner({ qle, session }: { qle: QLE; session: Session }) {
     );
   }
   return null;
+}
+
+function KvLine({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <dt className="text-muted">{k}</dt>
+      <dd className="text-ink-2 font-medium text-right truncate">{v}</dd>
+    </div>
+  );
 }
 
 function backFor(s: Session): string {

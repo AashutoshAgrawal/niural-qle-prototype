@@ -1,8 +1,6 @@
 /**
- * Niural-style left sidebar — lighter lavender background with sectioned
- * navigation. Section headers in ALL CAPS, items below.
- *
- * The "Benefits" product surfaces different sections per role.
+ * Niural-style left sidebar — Linear-inspired active state with a left
+ * accent strip and gentle hover.
  */
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -14,15 +12,16 @@ export type NavSection = {
 
 export function NiuralSidebar({ title, sections }: { title: string; sections: NavSection[] }) {
   return (
-    <aside className="w-[220px] shrink-0 bg-sidebar border-r border-default min-h-[calc(100vh-3rem)]">
+    <aside className="w-[224px] shrink-0 bg-sidebar border-r border-default min-h-[calc(100vh-3.5rem)]">
       <div className="px-4 py-4 border-b border-default">
-        <h2 className="text-base font-semibold tracking-tight">{title}</h2>
+        <div className="text-eyebrow text-muted mb-1">Workspace</div>
+        <h2 className="text-h3">{title}</h2>
       </div>
-      <nav className="px-2 py-3 space-y-4">
+      <nav className="px-2 py-4 space-y-5">
         {sections.map((section, i) => (
           <div key={i}>
             {section.heading && (
-              <div className="px-2 mb-1 text-[10px] uppercase tracking-wider text-muted font-medium">
+              <div className="px-2 mb-1.5 text-eyebrow text-muted-2">
                 {section.heading}
               </div>
             )}
@@ -31,16 +30,26 @@ export function NiuralSidebar({ title, sections }: { title: string; sections: Na
                 const Icon = item.icon;
                 return (
                   <Link
-                    key={item.href}
+                    key={item.href + item.label}
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[13px] transition-colors",
+                      "relative flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[13px] leading-tight transition-colors",
                       item.active
-                        ? "bg-brand-soft text-[var(--color-brand)] font-medium"
-                        : "text-ink-2 hover:bg-surface-2"
+                        ? "text-ink font-semibold bg-surface-2"
+                        : "text-ink-2 hover:bg-surface-2 hover:text-ink"
                     )}
                   >
-                    {Icon && <Icon className="h-3.5 w-3.5" />}
+                    {item.active && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-0.5 rounded-r-full bg-[var(--color-brand)]" />
+                    )}
+                    {Icon && (
+                      <Icon
+                        className={cn(
+                          "h-3.5 w-3.5 shrink-0",
+                          item.active ? "text-[var(--color-brand)]" : "text-muted-2"
+                        )}
+                      />
+                    )}
                     <span className="truncate">{item.label}</span>
                   </Link>
                 );

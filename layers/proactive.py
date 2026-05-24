@@ -2,7 +2,8 @@
 
 The system knows every dependent's birthdate. Instead of waiting for the
 employee to discover the loss of coverage through a denied claim
-(Ayush's $8k case, PRD §2.2), we surface a notification 60 days and again
+(which has historically led to surprise denied claims), we surface
+a notification 60 days and again
 30 days before the dependent turns 26.
 
 When the employee converts the notification into an action, we create

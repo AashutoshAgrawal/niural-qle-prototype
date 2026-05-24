@@ -245,7 +245,7 @@ class QLE(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     dependent_info = Column(JSON, nullable=True)
     dependent_id = Column(Integer, ForeignKey("dependents.id"), nullable=True)
-    # Marker so the seed/demo can reproduce Marcus's silent drop scenario
+    # Marker so the seed/demo can reproduce the silent-drop scenario
     simulate_carrier_drop = Column(Boolean, default=False)
 
     employee = relationship("Employee", back_populates="qles")

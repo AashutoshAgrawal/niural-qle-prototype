@@ -9,7 +9,7 @@ def _make_qle(session, carrier: str, simulate_drop: bool = False) -> QLE:
     org = Organization(name="FoundrCo")
     session.add(org)
     session.flush()
-    emp = Employee(name="Marcus", email="m@x.com", state="CA",
+    emp = Employee(name="Liam", email="l@x.com", state="CA",
                    organization_id=org.id, carrier=carrier)
     session.add(emp)
     session.flush()
@@ -72,7 +72,7 @@ def test_ac9_dropped_transaction_retries_then_escalates(session):
 
 
 def test_reconciliation_catches_silent_drops(session):
-    """PRD §8.3.6 — daily reconciliation catches drops Marcus's case style."""
+    """PRD §8.3.6 — daily reconciliation catches silent carrier drops."""
     qle = _make_qle(session, "Aetna", simulate_drop=True)
     txn = carriers.submit_to_carrier(session, qle, simulate_drop=True)
     # Backdate the submission so reconciliation considers it eligible

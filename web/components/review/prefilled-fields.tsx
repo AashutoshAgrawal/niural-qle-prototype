@@ -1,3 +1,4 @@
+"use client";
 /**
  * Renders an arbitrary `prefilled_data` / payload object as a clean,
  * human-readable list of labeled fields. Replaces JSON.stringify dumps.

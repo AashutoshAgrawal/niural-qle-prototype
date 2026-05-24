@@ -44,7 +44,7 @@ export interface DependentClaim {
 
 export interface ReviewEnrichment {
   doc: {
-    previewKind: "marriage_certificate" | "birth_certificate" | "divorce_decree" | "death_certificate" | "coverage_loss_letter" | "rejected" | "unknown";
+    previewKind: "marriage_certificate" | "birth_certificate" | "divorce_decree" | "death_certificate" | "coverage_loss_letter" | "wedding_invitation" | "rejected" | "unknown";
     previewTitle: string;
     previewIssuer: string;
     previewSubject: string;
@@ -110,8 +110,11 @@ function maskedSsn(rng: () => number): string {
   return `•••• ${last4}`;
 }
 
-function previewKindFor(eventType: string, routing: string | null | undefined):
+function previewKindFor(eventType: string, classifiedType: string | null | undefined, routing: string | null | undefined):
   ReviewEnrichment["doc"]["previewKind"] {
+  // When the classifier disagreed with the employee, show what was actually
+  // uploaded — not what the employee claimed it was.
+  if (classifiedType === "wedding_invitation") return "wedding_invitation";
   if (routing === "reject") return "rejected";
   switch (eventType) {
     case "marriage": return "marriage_certificate";
@@ -277,9 +280,17 @@ export function enrichReview(qle: QLE): ReviewEnrichment {
 
   return {
     doc: {
-      previewKind: previewKindFor(qle.event_type, document?.routing_decision),
-      previewTitle: previewTitleFor(qle.event_type, employee?.state),
-      previewIssuer: previewIssuerFor(qle.event_type, employee?.state),
+      previewKind: previewKindFor(qle.event_type, document?.classified_type, document?.routing_decision),
+      previewTitle: previewTitleForKind(
+        previewKindFor(qle.event_type, document?.classified_type, document?.routing_decision),
+        qle.event_type,
+        employee?.state,
+      ),
+      previewIssuer: previewIssuerForKind(
+        previewKindFor(qle.event_type, document?.classified_type, document?.routing_decision),
+        qle.event_type,
+        employee?.state,
+      ),
       previewSubject: `${employeeName} and ${docDepName}`,
       previewDate: fmtDateUS(docDate.toISOString()),
       sizeKb: 800 + Math.floor(rng() * 1800),
@@ -315,31 +326,67 @@ function stateName(abbr: string | undefined): string {
   return map[abbr] || abbr;
 }
 
-function previewTitleFor(eventType: string, state: string | undefined): string {
+function previewTitleForKind(
+  kind: ReviewEnrichment["doc"]["previewKind"],
+  eventType: string,
+  state: string | undefined,
+): string {
   const st = stateName(state);
-  switch (eventType) {
-    case "marriage": return `${st} — Certificate of Marriage`;
-    case "divorce": return `${st} Superior Court — Final Judgment of Divorce`;
-    case "birth_adoption": return `${st} Department of Health — Certificate of Live Birth`;
-    case "death_of_dependent": return `${st} Department of Health — Certificate of Death`;
-    case "loss_of_other_coverage": return "Prior Carrier — Notice of Coverage Termination";
-    default: return "Supporting Document";
+  switch (kind) {
+    case "marriage_certificate":   return `${st} — Certificate of Marriage`;
+    case "divorce_decree":         return `${st} Superior Court — Final Judgment of Divorce`;
+    case "birth_certificate":      return `${st} Department of Health — Certificate of Live Birth`;
+    case "death_certificate":      return `${st} Department of Health — Certificate of Death`;
+    case "coverage_loss_letter":   return "Prior Carrier — Notice of Coverage Termination";
+    case "wedding_invitation":     return "Wedding Invitation — Save the Date";
+    case "rejected":               return rejectedTitle(eventType, st);
+    default:                       return "Supporting Document";
   }
 }
 
-function previewIssuerFor(eventType: string, state: string | undefined): string {
-  const st = stateName(state);
+function rejectedTitle(eventType: string, st: string): string {
   switch (eventType) {
-    case "marriage":
-    case "birth_adoption":
-    case "death_of_dependent":
+    case "marriage":               return `${st} — Certificate of Marriage`;
+    case "divorce":                return `${st} Superior Court — Final Judgment of Divorce`;
+    case "birth_adoption":         return `${st} Department of Health — Certificate of Live Birth`;
+    case "death_of_dependent":     return `${st} Department of Health — Certificate of Death`;
+    case "loss_of_other_coverage": return "Prior Carrier — Notice of Coverage Termination";
+    default:                       return "Supporting Document";
+  }
+}
+
+function previewIssuerForKind(
+  kind: ReviewEnrichment["doc"]["previewKind"],
+  eventType: string,
+  state: string | undefined,
+): string {
+  const st = stateName(state);
+  switch (kind) {
+    case "marriage_certificate":
+    case "birth_certificate":
+    case "death_certificate":
       return `${st} Department of Health — Vital Records`;
-    case "divorce":
+    case "divorce_decree":
       return `${st} Superior Court, Family Division`;
-    case "loss_of_other_coverage":
+    case "coverage_loss_letter":
       return "Prior employer's benefits administrator";
+    case "wedding_invitation":
+      return "Personal invitation · no official issuer";
+    case "rejected":
+      return previewIssuerForKind(rejectedKindForEvent(eventType), eventType, state);
     default:
       return "Unspecified issuer";
+  }
+}
+
+function rejectedKindForEvent(eventType: string): ReviewEnrichment["doc"]["previewKind"] {
+  switch (eventType) {
+    case "marriage":               return "marriage_certificate";
+    case "divorce":                return "divorce_decree";
+    case "birth_adoption":         return "birth_certificate";
+    case "death_of_dependent":     return "death_certificate";
+    case "loss_of_other_coverage": return "coverage_loss_letter";
+    default:                       return "unknown";
   }
 }
 

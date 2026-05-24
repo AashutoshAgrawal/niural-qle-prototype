@@ -3,9 +3,9 @@
 A real implementation would use AWS Textract or Google Document AI to OCR the
 uploaded document, classify the type, extract key fields, and check image
 quality. For the prototype we use a filename heuristic so the demo is
-deterministic: this lets us reproduce the *exact* PRD evidence scenarios
-(Sarah's "wedding INVITATION", a blurry photo, a valid certificate) without
-needing real OCR infrastructure.
+deterministic: this lets us reproduce the exact failure modes (wedding
+invitation submitted as marriage proof, blurry photo, date mismatch,
+valid certificate) without needing real OCR infrastructure.
 
 Confidence thresholds and routing follow PRD §7.2.
 """
@@ -71,9 +71,9 @@ def validate_form(event_type: str, event_date: Optional[datetime],
 def run_intake(event_type: str, event_date: datetime, filename: str) -> IntakeResult:
     """Mock OCR + classification.
 
-    Heuristic rules (designed to mirror the PRD scenarios):
+    Heuristic rules (designed to mirror real failure modes):
       - "invitation" or "invite" in the filename → very low confidence
-        (Sarah's wedding invitation case, PRD §2.1)
+        (catches the wedding-invitation-as-proof anti-pattern)
       - "blurry" or "lowres" → quality fail, low confidence
       - "datemismatch" → simulate a doc whose date is 14 days off from declared
       - Filename matches the expected keywords for the event → high confidence
@@ -108,7 +108,7 @@ def run_intake(event_type: str, event_date: datetime, filename: str) -> IntakeRe
             notes="The image appears cropped — key fields are cut off. Please upload the full document.",
         )
 
-    # Misclassification: wedding invitation submitted for marriage (Sarah's case)
+    # Misclassification: wedding invitation submitted as proof of marriage
     if "invitation" in name or "invite" in name:
         return IntakeResult(
             confidence=0.15,

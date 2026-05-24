@@ -1,12 +1,12 @@
 """Seed the database for the demo.
 
-v2 scenarios:
-  - FoundrCo / Marcus — birth event mid-flight, three coverage lines with
-    Aetna (medical) silently dropping (PRD §2.3 ticket #41892)
+Demo scenarios (names are illustrative; no real persons):
+  - FoundrCo / Liam — birth event mid-flight, three coverage lines with
+    Aetna (medical) silently dropping (silent-drop reconciliation scenario)
   - FoundrCo / Anita — son aged off, NJ continuation option surfaced
   - FoundrCo / Diego — son turning 26 in 30 days, proactive notification
-    already pending so Janet/Diego can see Phase 0 in action
-  - LumenLabs / Priya — marriage doc with medium confidence, BenOps review
+    already pending (Phase 0)
+  - LumenLabs / Maya — marriage doc with medium confidence, BenOps review
   - LumenLabs / David — divorce, election_pending, dual Arlo carriers
   - LumenLabs / Rachel — marriage rejected at intake (wedding invitation)
   - Helios / Tom — clean state
@@ -51,7 +51,7 @@ def seed_all(db: Session, reset: bool = False):
     db.flush()
 
     # ---------------- Employees + their coverage lines ----------------
-    marcus = _emp(db, "Marcus Chen", "marcus@foundrco.example.com", "CA", foundrco.id,
+    marcus = _emp(db, "Liam Park", "liam@foundrco.example.com", "CA", foundrco.id,
                   [("medical", "Aetna", "PPO Family"),
                    ("dental", "Guardian", "Premium dental"),
                    ("vision", "Angle", "Vision basic")])
@@ -61,7 +61,7 @@ def seed_all(db: Session, reset: bool = False):
     diego = _emp(db, "Diego Park", "diego@foundrco.example.com", "IL", foundrco.id,
                  [("medical", "Guardian", "PPO Family"),
                   ("dental", "Arlo", "Standard dental")])
-    priya = _emp(db, "Priya Patel", "priya@lumenlabs.example.com", "NY", lumenlabs.id,
+    priya = _emp(db, "Maya Chen", "maya@lumenlabs.example.com", "NY", lumenlabs.id,
                  [("medical", "Aetna", "HMO"),
                   ("dental", "Arlo", "Basic dental")])
     david = _emp(db, "David Kim", "david@lumenlabs.example.com", "IL", lumenlabs.id,
@@ -76,11 +76,11 @@ def seed_all(db: Session, reset: bool = False):
     now = datetime.utcnow()
 
     # ---------------- Dependents ----------------
-    # Marcus has a spouse and a newborn (just born, hence the birth event)
+    # Liam has a spouse and a newborn (just born, hence the birth event)
     db.add_all([
-        Dependent(employee_id=marcus.id, name="Sara Chen", relationship_to_employee="spouse",
+        Dependent(employee_id=marcus.id, name="Riya Park", relationship_to_employee="spouse",
                   birthdate=datetime(1990, 3, 14), is_on_coverage=True),
-        Dependent(employee_id=marcus.id, name="Luca Chen", relationship_to_employee="child",
+        Dependent(employee_id=marcus.id, name="Luca Park", relationship_to_employee="child",
                   birthdate=now - timedelta(days=12), is_on_coverage=False),  # being added
     ])
     # Anita's son Aarav — already 26 (the aging-off case)
@@ -97,7 +97,7 @@ def seed_all(db: Session, reset: bool = False):
         unmarried=True, no_other_coverage=True, is_on_coverage=True,
     )
     db.add(mateo)
-    # Priya has a soon-to-be spouse (no dependent yet, marriage in flight)
+    # Maya has a soon-to-be spouse (no dependent yet, marriage in flight)
     db.flush()
 
     # ---------------- Proactive notification for Diego's son ----------------
@@ -122,7 +122,7 @@ def seed_all(db: Session, reset: bool = False):
     )
     db.add(notif)
 
-    # ---------------- Marcus's birth event (multi-carrier, drops) ----------------
+    # ---------------- Liam's birth event (multi-carrier, drops) ----------------
     marcus_qle = QLE(
         employee_id=marcus.id, event_type=EVENT_BIRTH,
         event_date=now - timedelta(days=12),
@@ -149,22 +149,22 @@ def seed_all(db: Session, reset: bool = False):
     ))
     # Audit history
     _audit_history(db, marcus_qle.id, [
-        ("submitted", "employee", "Marcus submitted birth event.", 11),
+        ("submitted", "employee", "Liam submitted birth event.", 11),
         ("intake_complete", "system", "Confidence 0.95, routing=auto_approve.", 11),
         ("docs_verified", "system", "Document validated; proceeding to rules engine.", 11),
         ("election_pending", "system", "Eligible options: add_dependent, tier_change.", 11),
-        ("election_confirmed", "employee", "Marcus chose: add_dependent.", 10),
+        ("election_confirmed", "employee", "Liam chose: add_dependent.", 10),
     ], now)
 
     # Fan-out: three carrier transactions / task cards, one per coverage line.
-    # The Aetna medical one will silently drop (Marcus's actual case).
+    # The Aetna medical one will silently drop.
     for cov in marcus.coverages:
         if cov.carrier in carriers.API_CARRIERS:
             payload = {
                 "employee": marcus.name, "event": "birth",
                 "coverage_line": cov.line, "carrier": cov.carrier,
             }
-            tx_id = f"noyo_marcus_{cov.line}"
+            tx_id = f"noyo_liam_{cov.line}"
             will_drop = (cov.line == LINE_MEDICAL)
             txn = CarrierTransaction(
                 qle_id=marcus_qle.id, carrier=cov.carrier, coverage_line=cov.line,
@@ -201,7 +201,9 @@ def seed_all(db: Session, reset: bool = False):
                 },
                 drafted_email=(
                     f"Hi {cov.carrier} team,\n\n"
-                    f"Please process birth event for {marcus.name}…\n"
+                    f"Please process birth event for {marcus.name} (employee #{marcus.id}).\n"
+                    f"Effective date: {marcus_qle.event_date.date()}\n\n"
+                    f"Thanks,\nNiural BenOps\n"
                 ),
                 status="completed",
                 completed_at=now - timedelta(days=8),
@@ -236,7 +238,7 @@ def seed_all(db: Session, reset: bool = False):
          "Eligible options: federal_cobra, nj_continuation_to_31.", 3),
     ], now)
 
-    # ---------------- Priya — marriage, BenOps review ----------------
+    # ---------------- Maya — marriage, BenOps review ----------------
     priya_qle = QLE(
         employee_id=priya.id, event_type=EVENT_MARRIAGE,
         event_date=now - timedelta(days=8),
@@ -255,7 +257,7 @@ def seed_all(db: Session, reset: bool = False):
         notes="Filename ambiguous. Document content looks like a marriage cert.",
     ))
     _audit_history(db, priya_qle.id, [
-        ("submitted", "employee", "Priya submitted marriage event.", 8),
+        ("submitted", "employee", "Maya submitted marriage event.", 8),
         ("intake_complete", "system", "Confidence 0.78, routing=benops_review.", 8),
         ("queued_for_review", "system", "Medium confidence — BenOps to review.", 8),
     ], now)

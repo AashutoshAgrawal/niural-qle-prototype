@@ -14,7 +14,7 @@ def _make_employee(session, state="CA", carrier="Aetna"):
     org = Organization(name="LumenLabs")
     session.add(org)
     session.flush()
-    emp = Employee(name="Janet's report", email="x@y.com", state=state,
+    emp = Employee(name="Test Employee", email="x@y.com", state=state,
                    organization_id=org.id, carrier=carrier)
     session.add(emp)
     session.flush()

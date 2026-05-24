@@ -63,21 +63,21 @@ export function NiuralTopBar({ session, activeProduct = "benefits" }: { session:
   }
 
   return (
-    <header className="sticky top-0 z-30 bg-topbar border-b border-default">
-      <div className="px-4 h-12 flex items-center gap-2">
+    <header className="sticky top-0 z-30 bg-topbar border-b border-default backdrop-blur supports-[backdrop-filter]:bg-topbar/95">
+      <div className="px-5 h-14 flex items-center gap-3">
         <Link href={session ? "/" : "/login"} className="flex items-center gap-2 mr-4 shrink-0">
           <div className={
-            "h-6 w-6 rounded-md flex items-center justify-center " +
+            "h-7 w-7 rounded-lg flex items-center justify-center " +
             (isInternal ? "bg-[var(--color-brand)]" : "bg-ink")
           }>
             {isInternal
-              ? <ServerCog className="h-3.5 w-3.5 text-white" />
-              : <Sparkles className="h-3 w-3 text-white" />}
+              ? <ServerCog className="h-4 w-4 text-white" />
+              : <Sparkles className="h-3.5 w-3.5 text-white" />}
           </div>
-          <div className="flex items-baseline gap-2">
+          <div className="flex items-center gap-2">
             <span className="font-semibold text-[15px] tracking-tight">Niural AI</span>
             {isInternal && (
-              <span className="text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-[var(--color-brand)] text-white">
+              <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[var(--color-brand)] text-white">
                 Internal
               </span>
             )}
@@ -91,15 +91,15 @@ export function NiuralTopBar({ session, activeProduct = "benefits" }: { session:
             const content = (
               <span
                 className={
-                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[13px] transition-colors " +
+                  "flex items-center gap-1.5 px-2.5 h-8 rounded-md text-[13px] transition-colors " +
                   (isActive
-                    ? "text-[var(--color-brand)] font-medium"
-                    : "text-ink-2 hover:bg-surface-2") +
-                  (tab.enabled ? "" : " opacity-60 cursor-not-allowed")
+                    ? "text-ink bg-surface-2 font-semibold"
+                    : "text-ink-2 hover:bg-surface-2 hover:text-ink") +
+                  (tab.enabled ? "" : " opacity-50 cursor-not-allowed")
                 }
                 aria-disabled={!tab.enabled}
               >
-                <Icon className="h-3.5 w-3.5" />
+                <Icon className={"h-3.5 w-3.5 " + (isActive ? "text-[var(--color-brand)]" : "text-muted-2")} />
                 {tab.label}
               </span>
             );
@@ -112,32 +112,32 @@ export function NiuralTopBar({ session, activeProduct = "benefits" }: { session:
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5">
-          {/* Wallet pill — only for HR admins (who handle org-level finance) */}
           {session?.kind === "hr_admin" && (
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface text-xs">
+            <span className="hidden md:flex items-center gap-1.5 px-2.5 h-8 rounded-md bg-surface border border-default text-xs">
               <CircleDollarSign className="h-3.5 w-3.5 text-[var(--color-success)]" />
               <span className="font-medium">USD 0.00</span>
             </span>
           )}
 
-          {/* Niural AI assistant — customer-facing only, not for internal ops */}
           {!isInternal && (
-            <button className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-gradient-to-r from-[var(--color-brand)] to-[var(--color-violet)] text-white text-xs font-medium">
+            <button className="hidden md:flex items-center gap-1.5 px-2.5 h-8 rounded-md bg-gradient-to-r from-[var(--color-brand)] to-[var(--color-violet)] text-white text-xs font-medium shadow-[0_1px_2px_rgba(113,77,255,0.25)]">
               <Sparkles className="h-3.5 w-3.5" /> Niural AI
             </button>
           )}
 
-          <button className="p-1.5 rounded-md hover:bg-surface-2 text-muted">
+          <button className="p-1.5 rounded-md hover:bg-surface-2 text-muted-2 hover:text-ink transition-colors">
             <Search className="h-4 w-4" />
           </button>
-          <button className="p-1.5 rounded-md hover:bg-surface-2 text-muted">
+          <button className="p-1.5 rounded-md hover:bg-surface-2 text-muted-2 hover:text-ink transition-colors">
             <HelpCircle className="h-4 w-4" />
           </button>
+
           {session ? (
             <>
-              <div className="px-2 hidden md:block text-right">
-                <div className="text-xs font-medium leading-tight">{session.name}</div>
-                <div className="text-[10px] text-muted-2 leading-tight">
+              <div className="h-6 w-px bg-default mx-1" aria-hidden />
+              <div className="px-1 hidden md:block text-right">
+                <div className="text-xs font-semibold leading-tight">{session.name}</div>
+                <div className="text-[10px] text-muted-2 leading-tight mt-0.5">
                   {session.kind === "employee" ? session.org_name :
                    session.kind === "hr_admin" ? (session.title || "HR admin") :
                    (session.title || "Operations")}
@@ -145,13 +145,17 @@ export function NiuralTopBar({ session, activeProduct = "benefits" }: { session:
               </div>
               <Avatar name={session.name} size="sm" />
               <form action={signOut}>
-                <button type="submit" className="p-1.5 rounded-md hover:bg-surface-2 text-muted" title="Sign out">
+                <button
+                  type="submit"
+                  className="p-1.5 rounded-md hover:bg-surface-2 text-muted-2 hover:text-ink transition-colors"
+                  title="Sign out"
+                >
                   <LogOut className="h-4 w-4" />
                 </button>
               </form>
             </>
           ) : (
-            <Link href="/login" className="px-3 py-1 rounded-md bg-ink text-white text-xs font-medium">
+            <Link href="/login" className="px-3 h-8 inline-flex items-center rounded-md bg-ink text-white text-xs font-medium">
               Sign in
             </Link>
           )}
