@@ -1,0 +1,152 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — calibrated to match niural.com.
+ * Niural's actual brand: vibrant #714DFF as primary, pastel accent
+ * backgrounds, generous whitespace, Inter for body type.
+ */
+@theme {
+  /* Surfaces — clean white with a hint of neutral gray for layered cards */
+  --color-canvas: #FAFAFA;
+  --color-surface: #FFFFFF;
+  --color-surface-2: #F4F4F5;
+  --color-surface-3: #E8E8E8;
+  --color-topbar: #FFFFFF;
+  --color-sidebar: #FAFAFA;
+  --color-border: #E5E5E7;
+  --color-border-strong: #D4D4D8;
+
+  /* Ink */
+  --color-ink: #0A0A0A;
+  --color-ink-2: #27272A;
+  --color-muted: #71717A;
+  --color-muted-2: #A1A1AA;
+
+  /* Brand — Niural's vivid purple */
+  --color-brand: #714DFF;
+  --color-brand-2: #5B36E6;
+  --color-brand-soft: #EBE3FF;
+  --color-brand-tint: #F5F0FF;
+
+  /* Status — desaturated, not noisy */
+  --color-success: #10B981;
+  --color-success-soft: #DCFCE7;
+  --color-warning: #F59E0B;
+  --color-warning-soft: #FEF3C7;
+  --color-danger: #EF4444;
+  --color-danger-soft: #FEE2E2;
+  --color-info: #3B82F6;
+  --color-info-soft: #DBEAFE;
+
+  /* Aliases */
+  --color-violet: #714DFF;
+  --color-violet-soft: #EBE3FF;
+
+  /* Pastel accent palette — for status chips, charts, illustrations */
+  --color-pastel-lavender: #EBDDFF;
+  --color-pastel-pink: #FFDCFB;
+  --color-pastel-peach: #FFE4DC;
+  --color-pastel-mint: #DCFFDE;
+  --color-pastel-cream: #FFFDDF;
+  --color-pastel-sky: #D1F4FF;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+:root {
+  --background: var(--color-canvas);
+  --foreground: var(--color-ink);
+}
+
+html, body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-feature-settings: "cv11", "ss01", "ss03";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.005em;
+}
+
+* { border-color: var(--color-border); }
+
+*:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Utility colour classes — keep names stable so existing pages don't break */
+.text-ink { color: var(--color-ink); }
+.text-ink-2 { color: var(--color-ink-2); }
+.text-muted { color: var(--color-muted); }
+.text-muted-2 { color: var(--color-muted-2); }
+.text-brand { color: var(--color-brand); }
+.bg-canvas { background-color: var(--color-canvas); }
+.bg-surface { background-color: var(--color-surface); }
+.bg-surface-2 { background-color: var(--color-surface-2); }
+.bg-surface-3 { background-color: var(--color-surface-3); }
+.bg-topbar { background-color: var(--color-topbar); }
+.bg-sidebar { background-color: var(--color-sidebar); }
+.bg-brand { background-color: var(--color-brand); }
+.bg-brand-soft { background-color: var(--color-brand-soft); }
+.bg-brand-tint { background-color: var(--color-brand-tint); }
+.border-default { border-color: var(--color-border); }
+.border-strong { border-color: var(--color-border-strong); }
+.bg-default { background-color: var(--color-border); }
+
+/* Pastel accent utilities */
+.bg-pastel-lavender { background-color: var(--color-pastel-lavender); }
+.bg-pastel-pink    { background-color: var(--color-pastel-pink); }
+.bg-pastel-peach   { background-color: var(--color-pastel-peach); }
+.bg-pastel-mint    { background-color: var(--color-pastel-mint); }
+.bg-pastel-cream   { background-color: var(--color-pastel-cream); }
+.bg-pastel-sky     { background-color: var(--color-pastel-sky); }
+
+/* Card — flat surface with quiet border, no heavy shadow */
+.card-elevated {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(16, 16, 24, 0.04);
+}
+.card-elevated:has(.hover-lift):hover,
+.card-elevated.hover-lift:hover {
+  border-color: var(--color-border-strong);
+  box-shadow: 0 4px 12px rgba(16, 16, 24, 0.06);
+}
+
+/* Optional subtle dotted background */
+.bg-dotted {
+  background-image: radial-gradient(circle at 1px 1px, #E5E5E7 1px, transparent 0);
+  background-size: 20px 20px;
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  100% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+}
+
+.animate-fade-in { animation: fade-in 0.3s ease-out; }
+.animate-slide-in { animation: slide-in 0.25s ease-out; }
+.animate-pulse-ring { animation: pulse-ring 1.8s ease-out infinite; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #D4D4D8;
+  border-radius: 8px;
+  border: 2px solid var(--color-canvas);
+}
+::-webkit-scrollbar-thumb:hover { background: #A1A1AA; }
